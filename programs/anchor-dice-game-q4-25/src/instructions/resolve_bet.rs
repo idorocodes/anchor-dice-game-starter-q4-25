@@ -17,6 +17,7 @@ pub const HOUSE_EDGE: u16 = 150;
 pub struct ResolveBet<'info> {
     #[account(mut)]
     pub house: Signer<'info>,
+    ///CHECK : This is safe
     #[account(mut)]
     pub player: UncheckedAccount<'info>,
     #[account(
@@ -34,6 +35,7 @@ pub struct ResolveBet<'info> {
         bump = bet.bump
     )]
     pub bet: Account<'info, Bet>,
+     ///CHECK : This is safe
     #[account( address = solana_program::sysvar::instructions::ID)]
     pub instruction_sysvar: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,

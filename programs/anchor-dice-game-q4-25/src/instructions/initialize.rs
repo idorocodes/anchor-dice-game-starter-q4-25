@@ -15,6 +15,10 @@ pub struct Initialize<'info> {
 
 impl<'info> Initialize<'info> {
     pub fn init(&mut self, amount: u64) -> Result<()> {
+        
+        let rent = Rent::get()?;
+        let rent_exempt = rent.minimum_balance(0);
+        
         let accounts = Transfer {
             from: self.house.to_account_info(),
             to: self.vault.to_account_info()
@@ -25,6 +29,6 @@ impl<'info> Initialize<'info> {
             accounts
         );
 
-        transfer(ctx, amount)
+        transfer(ctx, amount + rent_exempt)
     }
 }

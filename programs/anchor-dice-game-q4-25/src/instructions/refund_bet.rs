@@ -29,8 +29,10 @@ pub struct RefundBet<'info> {
 
 impl<'info> RefundBet<'info> {
     pub fn refund_bet(&mut self, bumps: &RefundBetBumps) -> Result<()> {
-        let slot = Clock::get()?.slot;
-        require!((self.bet.slot - slot) > 1000, DiceError::TimeoutNotReached);
+        let current_slot = Clock::get()?.slot;
+        let elapsed_time = current_slot.saturating_sub(self.bet.slot);
+        require!(elapsed_time > 5, DiceError::TimeoutNotReached);
+        
         let accounts = Transfer {
             from: self.vault.to_account_info(),
             to: self.player.to_account_info(),

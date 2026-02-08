@@ -29,5 +29,7 @@ pub enum DiceError {
     #[msg("Ed25119 Accounts Error")]
     Ed25519Accounts,
     #[msg("Ed25119 Data Length Error")]
-    Ed25519DataLength
+    Ed25519DataLength,
+    #[msg("Cannot place bet above user balance")]
+    InsufficientFunds
 }
