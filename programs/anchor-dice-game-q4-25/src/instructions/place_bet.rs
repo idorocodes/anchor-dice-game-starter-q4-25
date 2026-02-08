@@ -1,6 +1,10 @@
-use anchor_lang::{prelude::*, system_program::{Transfer, transfer}};
+use anchor_lang::{
+    prelude::*,
+    system_program::{transfer, Transfer},
+};
+use solana_program::native_token::LAMPORTS_PER_SOL;
 
-use crate::state::Bet;
+use crate::{errors::DiceError, state::Bet};
 
 #[derive(Accounts)]
 #[instruction(seed:u128)]
@@ -23,18 +27,31 @@ pub struct PlaceBet<'info> {
         bump
     )]
     pub bet: Account<'info, Bet>,
-    pub system_program: Program<'info, System>
+    pub system_program: Program<'info, System>,
 }
 
 impl<'info> PlaceBet<'info> {
-    pub fn create_bet(&mut self, bumps: &PlaceBetBumps, seed: u128, roll: u8, amount: u64) -> Result<()> {
-        self.bet.set_inner(Bet{
-            slot : Clock::get()?.slot,
+    pub fn create_bet(
+        &mut self,
+        bumps: &PlaceBetBumps,
+        seed: u128,
+        roll: u8,
+        amount: u64,
+    ) -> Result<()> {
+        require!(roll > 2, DiceError::MinimumRoll);
+        require!(roll < 96, DiceError::MaximumRoll);
+
+        let check_amount = amount / LAMPORTS_PER_SOL;
+        let max_bet = 5 * LAMPORTS_PER_SOL;
+        require!(amount > check_amount, DiceError::MinimumBet);
+        require!(check_amount < max_bet, DiceError::MaximumBet);
+        self.bet.set_inner(Bet {
+            slot: Clock::get()?.slot,
             player: self.player.key(),
             seed,
             roll,
             amount,
-            bump : bumps.bet,
+            bump: bumps.bet,
         });
         Ok(())
     }
@@ -42,13 +59,10 @@ impl<'info> PlaceBet<'info> {
     pub fn deposit(&mut self, amount: u64) -> Result<()> {
         let accounts = Transfer {
             from: self.player.to_account_info(),
-            to: self.vault.to_account_info()
+            to: self.vault.to_account_info(),
         };
 
-        let ctx = CpiContext::new(
-            self.system_program.to_account_info(),
-            accounts
-        );
+        let ctx = CpiContext::new(self.system_program.to_account_info(), accounts);
         transfer(ctx, amount)
     }
 }
